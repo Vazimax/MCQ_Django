@@ -1,0 +1,2 @@
+API_KEY = 'TEST'
+# API_KEY = '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'

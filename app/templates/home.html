@@ -1,0 +1,17 @@
+<center>
+
+{% block content %}
+    <h1> Create your Quiz </h1>
+    <form method='post' action=''>
+        {% csrf_token %}
+        <textarea name='text'></textarea>
+        <br>
+        <br>
+        <input type='submit'>
+    </form>
+        {% if questions %}
+
+        {% endif %}
+{% endblock %}
+
+</center

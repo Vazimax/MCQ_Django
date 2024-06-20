@@ -1,0 +1,5 @@
+<h2> Download the Quiz </h2>
+
+{% for test in data %}
+    <a href='/downlaod/{{test.0}}'> {{test.1}} </a>
+{% endfor %}
