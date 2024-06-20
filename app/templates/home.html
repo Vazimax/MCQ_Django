@@ -1,17 +1,21 @@
-<center>
-
-{% block content %}
-    <h1> Create your Quiz </h1>
-    <form method='post' action=''>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Quiz Generator</title>
+</head>
+<body>
+    <form method="post">
         {% csrf_token %}
-        <textarea name='text'></textarea>
-        <br>
-        <br>
-        <input type='submit'>
+        <textarea name="text" rows="10" cols="30"></textarea>
+        <button type="submit">Generate Questions</button>
     </form>
-        {% if questions %}
 
-        {% endif %}
-{% endblock %}
-
-</center
+    {% if questions %}
+        <h2>Generated Questions</h2>
+        <pre>{{ questions }}</pre>
+    {% else %}
+        <p>No questions generated yet.</p>
+    {% endif %}
+</body>
+</html>

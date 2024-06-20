@@ -4,32 +4,38 @@ from .services import *
 import os
 
 def home(request):
-
     if request.method == 'POST':
         text = request.POST['text']
         questions = generate_questions(text)
         
-        context = {'questions':questions}
+        # Debugging print
+        print(f"Generated Questions: {questions}")
+        
+        context = {'questions': questions}
         return render(request, 'home.html', context)
-
-
     return render(request, 'home.html')
 
 def history(request):
+    return render(request, 'download.html')
 
-    return render(request,'download.html')
-
-data = display()
+def display_data():
+    data = display()
+    # Debugging print
+    print(f"Display Data: {data}")
+    return data
 
 class TestListView(TemplateView):
-    template = 'download.html'
-    def get_context(self, **kwargs):
-        context = super().get_context(**kwargs)
-        context['data'] = data
-
+    template_name = 'download.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['data'] = display_data()
+        # Debugging print
+        print(f"Context Data: {context['data']}")
         return context
     
-def download(request,test_id):
+def download(request, test_id):
+    data = display_data()
     test = next((t for t in data if t[0] == test_id), None)
 
     if test:
@@ -41,10 +47,9 @@ def download(request,test_id):
             f.write(questions)
 
         file_path = os.path.join(os.getcwd(), filename)
-        response = HttpResponse(open(file_path,'rb'),content_type='text/plain')
-        response['Content-Description'] = f'attachment; filename= {header}.txt'
+        response = HttpResponse(open(file_path, 'rb'), content_type='text/plain')
+        response['Content-Disposition'] = f'attachment; filename={header}.txt'
 
         return response
-    
     else:
-        return HttpResponse('Test Is Not Found')
+        return HttpResponse('Test Not Found')

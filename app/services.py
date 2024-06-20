@@ -1,8 +1,10 @@
-from .config import API_KEY
 import sqlite3
-import openai
+import replicate
+import os
 
-openai.api_key = API_KEY
+replicate_api_token = os.environ.get('REPLICATE_API', '000')
+
+os.environ['REPLICATE_API_TOKEN'] = replicate_api_token
 
 def initialize_database():
     con = sqlite3.connect('questions.db')
@@ -19,39 +21,48 @@ def generate_questions(text):
 
     con = sqlite3.connect('questions.db')
     cursor = con.cursor()
-    
-    prompt = f"Create a quiz on the following text: \n{text}\n\n" \
-             f"Each question should be in a different line and has 4 possible answers" \
-             f"Under the possible answers we should have the correct answer"
-    
-    res = openai.Completion.create(
-        engine = 'text-davinci-003',
-        prompt = prompt,
-        max_token = 3500,
-        stop = None,
-        temperature = 0.7
-    )
 
-    questions = res.choices[0].text
+    input_data = {
+        "top_p": 1,
+        "prompt": f"Create a quiz on the following text: \n{text}\n\n" \
+                  f"Each question should be in a different line and has 4 possible answers." \
+                  f" Under the possible answers we should have the correct answer.",
+        "temperature": 0.75
+    }
+    
+    res = []
+
+    for event in replicate.stream(
+        "meta/llama-2-70b",
+        input=input_data
+    ):
+        if hasattr(event, 'text'):
+            res.append(event.text)
+        
+    questions = ''.join(res)
 
     base_key = ''.join(text.split()[:2])
 
     index = 1
-
-    while key_exits(cursor, key):
-        key = f"{base_key} {index}"
+    key = base_key
+    
+    while key_exists(cursor, key):
+        key = f"{base_key}_{index}"
         index += 1
 
-        value = questions
-        cursor.execute("INSERT INTO questions (key, values) VALUES (?, ?)", (key, values))
-        con.commit()
+    cursor.execute("INSERT INTO questions (key, value) VALUES (?, ?)", (key, questions))
+    con.commit()
 
-        return questions
+    # Debugging print
+    print(f"Inserted Questions: Key={key}, Questions={questions}")
+
+    con.close()
+
+    return questions
 
 
-
-def key_exits(cursor, key):
-    cursor.execute("SELECT COUNT(*) FROM questions WHERE key = ?",(key,))
+def key_exists(cursor, key):
+    cursor.execute("SELECT COUNT(*) FROM questions WHERE key = ?", (key,))
     count = cursor.fetchone()[0]
     return count > 0
 
@@ -64,4 +75,5 @@ def display():
     cursor.execute("SELECT * FROM questions")
     rows = cursor.fetchall()
 
+    con.close()
     return rows
